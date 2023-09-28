@@ -4,6 +4,11 @@
 
 提供了一个简单的 jupyter notebook 用于演示。依次执行前两个代码块来上传文本，在最后一个代码块中修改 `prompt` 的值来进行提问。
 
+或使用 mvp.py 来进行简单的交互式对话（默认使用了novels/test.txt）
+```bash
+python3 mvp.py interactive
+```
+
 ## API reference
 
 - GET /book/
