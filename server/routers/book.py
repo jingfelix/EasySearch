@@ -1,8 +1,7 @@
 from flask import blueprints, jsonify, request
-from whoosh.qparser import QueryParser
 
 from server.models import BookFactory, Books
-from server.utils import query_by_prompt
+from server.utils import query_by_line_id, query_by_prompt
 
 book_list = Books()
 
@@ -41,7 +40,7 @@ def book():
 
 
 @bp.route("/<book_id>", methods=["GET"])
-def search_by_id(book_id: str):
+def search_by_book_id(book_id: str):
     prompt = request.args.get("prompt", "")
     if prompt == "":
         return jsonify({"code": 1, "msg": "prompt is empty", "data": {}})
@@ -56,3 +55,17 @@ def search_by_id(book_id: str):
     results = query_by_prompt(ix, prompt)
 
     return jsonify({"code": 0, "msg": "success", "data": {"results": results}})
+
+
+@bp.route("/<book_id>/<line_id>", methods=["GET"])
+def search_by_line_id(book_id: str, line_id: str):
+    # 在 books 中查找 book_id 对应的 ix
+    aBook = book_list.get_book_by_id(book_id)
+    if aBook is None:
+        return jsonify({"code": 1, "msg": "book not found", "data": {}})
+
+    # 在 ix 中查找
+    ix = aBook.ix
+    line = query_by_line_id(ix, int(line_id))
+
+    return jsonify({"code": 0, "msg": "success", "data": {"line": line}})

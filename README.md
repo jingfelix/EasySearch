@@ -31,6 +31,14 @@ python3 mvp.py interactive
     print(res.json()['data']['results'])
     ```
 
+- GET /book/{book_id}/{line_id}
+    - 返回书籍中指定行号的句子
+    ```python
+    import requests
+    res = requests.get('http://localhost:5000/book/b24a24a5-d166-458c-a794-d64733737c35/0')
+    print(res.json()['data']['line'])
+    ```
+
 ## TODOs
 
 - 对文本的更多处理，如去除 prompt 中的标点

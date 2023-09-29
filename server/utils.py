@@ -2,7 +2,7 @@ from functools import lru_cache
 from io import BytesIO, TextIOWrapper
 
 from jieba.analyse import ChineseAnalyzer
-from whoosh.fields import TEXT, SchemaClass
+from whoosh.fields import ID, TEXT, SchemaClass
 from whoosh.filedb.filestore import RamStorage
 from whoosh.index import FileIndex
 from whoosh.qparser import QueryParser
@@ -14,6 +14,7 @@ analyzer = ChineseAnalyzer()
 
 class ArticleSchema(SchemaClass):
     content = TEXT(stored=True, analyzer=analyzer)
+    line_id = ID(stored=True)
 
 
 schema = ArticleSchema()
@@ -45,8 +46,11 @@ def build_index(book_id: str, content: bytes) -> FileIndex:
 
         f = TextIOWrapper(BytesIO(content), encoding="utf-8")
 
+        line_id = 0
         for line in f:
-            writer.add_document(content=line.strip())
+            print("running here")
+            writer.add_document(content=line.strip(), line_id=str(line_id))
+            line_id += 1
 
         writer.commit()
 
@@ -71,3 +75,14 @@ def query_by_prompt(ix: FileIndex, prompt: str) -> list:
                 results.append(result["content"])
 
     return results
+
+
+@lru_cache()
+def query_by_line_id(ix: FileIndex, line_id: int) -> str:
+    with ix.searcher() as searcher:
+        results = [line for line in searcher.documents(line_id=str(line_id))]
+
+    if len(results) != 0:
+        return results[0]["content"]
+    else:
+        return "No results found."
