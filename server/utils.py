@@ -36,7 +36,7 @@ def _create_in(schema, indexname=None):
 #     return FileIndex(storage, schema=schema, indexname=indexname)
 
 
-def buildindex(book_id: int, content: bytes) -> FileIndex:
+def build_index(book_id: str, content: bytes) -> FileIndex:
     try:
         ix = _create_in(schema, indexname=f"novel_index_{book_id}")
         writer = ix.writer()
