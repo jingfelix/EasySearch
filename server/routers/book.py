@@ -1,9 +1,9 @@
 from flask import blueprints, jsonify, request
 from whoosh.qparser import QueryParser
 
-from server.models import Book, Books
+from server.models import Books, BookFactory
 
-books = Books()
+book_list = Books()
 
 bp = blueprints.Blueprint("book", __name__, url_prefix="/book")
 
@@ -11,7 +11,7 @@ bp = blueprints.Blueprint("book", __name__, url_prefix="/book")
 @bp.route("/", methods=["GET", "POST"])
 def book():
     if request.method == "GET":
-        return jsonify({"code": 0, "msg": "success", "data": books.books()})
+        return jsonify({"code": 0, "msg": "success", "data": book_list.list_books()})
 
     elif request.method == "POST":
         # 上传书目
@@ -24,13 +24,13 @@ def book():
         name = str(file.filename).split(".")[0]
 
         # 创建 book 对象
-        book = Book.create(name, file.read())
+        aBook = BookFactory.create_book(name, file.read())
 
-        if book:
-            books.add(book)
+        if aBook:
+            book_list.add_book(aBook)
 
             return jsonify(
-                {"code": 0, "msg": "success", "data": {"book_id": book.book_id}}
+                {"code": 0, "msg": "success", "data": {"book_id": aBook.book_id}}
             )
         else:
             return jsonify({"code": 1, "msg": "fail to create book", "data": {}})
@@ -46,12 +46,12 @@ def search_by_id(book_id: str):
         return jsonify({"code": 1, "msg": "prompt is empty", "data": {}})
 
     # 在 books 中查找 book_id 对应的 ix
-    book = books.get_by_id(book_id)
-    if book is None:
+    aBook = book_list.get_book_by_id(book_id)
+    if aBook is None:
         return jsonify({"code": 1, "msg": "book not found", "data": {}})
 
     # 在 ix 中查找
-    ix = book.ix
+    ix = aBook.ix
     results = []
 
     with ix.searcher() as searcher:
