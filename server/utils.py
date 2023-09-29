@@ -71,7 +71,11 @@ def query_by_prompt(ix: FileIndex, prompt: str) -> list:
             results.append("No results found.")
         else:
             for result in _results:
-                results.append(result["content"])
+                print(result)
+                results.append({
+                    "id": result["line_id"],
+                    "content": result["content"]
+                })
 
     return results
 
