@@ -1,9 +1,9 @@
 from flask import blueprints, jsonify, request
-from whoosh.qparser import QueryParser
 
-from server.models import Book, Books
+from server.models import BookFactory, Books
+from server.utils import query_by_line_id, query_by_prompt
 
-books = Books()
+book_list = Books()
 
 bp = blueprints.Blueprint("book", __name__, url_prefix="/book")
 
@@ -11,7 +11,7 @@ bp = blueprints.Blueprint("book", __name__, url_prefix="/book")
 @bp.route("/", methods=["GET", "POST"])
 def book():
     if request.method == "GET":
-        return jsonify({"code": 0, "msg": "success", "data": books.books()})
+        return jsonify({"code": 0, "msg": "success", "data": book_list.list_books()})
 
     elif request.method == "POST":
         # 上传书目
@@ -24,13 +24,13 @@ def book():
         name = str(file.filename).split(".")[0]
 
         # 创建 book 对象
-        book = Book.create(name, file.read())
+        aBook = BookFactory.create_book(name, file.read())
 
-        if book:
-            books.add(book)
+        if aBook:
+            book_list.add_book(aBook)
 
             return jsonify(
-                {"code": 0, "msg": "success", "data": {"book_id": book.book_id}}
+                {"code": 0, "msg": "success", "data": {"book_id": aBook.book_id}}
             )
         else:
             return jsonify({"code": 1, "msg": "fail to create book", "data": {}})
@@ -40,27 +40,32 @@ def book():
 
 
 @bp.route("/<book_id>", methods=["GET"])
-def search_by_id(book_id: str):
+def search_by_book_id(book_id: str):
     prompt = request.args.get("prompt", "")
     if prompt == "":
         return jsonify({"code": 1, "msg": "prompt is empty", "data": {}})
 
     # 在 books 中查找 book_id 对应的 ix
-    book = books.get_by_id(book_id)
-    if book is None:
+    aBook = book_list.get_book_by_id(book_id)
+    if aBook is None:
         return jsonify({"code": 1, "msg": "book not found", "data": {}})
 
     # 在 ix 中查找
-    ix = book.ix
-    results = []
-
-    with ix.searcher() as searcher:
-        query = QueryParser("content", ix.schema).parse(prompt)
-        _results = searcher.search(query)
-        if len(_results) == 0:
-            results.append("No results found.")
-        else:
-            for result in _results:
-                results.append(result["content"])
+    ix = aBook.ix
+    results = query_by_prompt(ix, prompt)
 
     return jsonify({"code": 0, "msg": "success", "data": {"results": results}})
+
+
+@bp.route("/<book_id>/<line_id>", methods=["GET"])
+def search_by_line_id(book_id: str, line_id: str):
+    # 在 books 中查找 book_id 对应的 ix
+    aBook = book_list.get_book_by_id(book_id)
+    if aBook is None:
+        return jsonify({"code": 1, "msg": "book not found", "data": {}})
+
+    # 在 ix 中查找
+    ix = aBook.ix
+    line = query_by_line_id(ix, int(line_id))
+
+    return jsonify({"code": 0, "msg": "success", "data": {"line": line}})

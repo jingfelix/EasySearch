@@ -1,9 +1,11 @@
+from functools import lru_cache
 from io import BytesIO, TextIOWrapper
 
 from jieba.analyse import ChineseAnalyzer
-from whoosh.fields import TEXT, SchemaClass
+from whoosh.fields import ID, TEXT, SchemaClass
 from whoosh.filedb.filestore import RamStorage
 from whoosh.index import FileIndex
+from whoosh.qparser import QueryParser
 
 storage = RamStorage()
 
@@ -12,6 +14,7 @@ analyzer = ChineseAnalyzer()
 
 class ArticleSchema(SchemaClass):
     content = TEXT(stored=True, analyzer=analyzer)
+    line_id = ID(stored=True)
 
 
 schema = ArticleSchema()
@@ -36,15 +39,17 @@ def _create_in(schema, indexname=None):
 #     return FileIndex(storage, schema=schema, indexname=indexname)
 
 
-def buildindex(book_id: int, content: bytes) -> FileIndex:
+def build_index(book_id: str, content: bytes) -> FileIndex:
     try:
         ix = _create_in(schema, indexname=f"novel_index_{book_id}")
         writer = ix.writer()
 
         f = TextIOWrapper(BytesIO(content), encoding="utf-8")
 
+        line_id = 0
         for line in f:
-            writer.add_document(content=line.strip())
+            writer.add_document(content=line.strip(), line_id=str(line_id))
+            line_id += 1
 
         writer.commit()
 
@@ -53,3 +58,30 @@ def buildindex(book_id: int, content: bytes) -> FileIndex:
     except Exception as e:
         print(e)
         return None
+
+
+@lru_cache()
+def query_by_prompt(ix: FileIndex, prompt: str) -> list:
+    results = []
+
+    with ix.searcher() as searcher:
+        query = QueryParser("content", ix.schema).parse(prompt)
+        _results = searcher.search(query)
+        if len(_results) == 0:
+            results.append("No results found.")
+        else:
+            for result in _results:
+                results.append(result["content"])
+
+    return results
+
+
+@lru_cache()
+def query_by_line_id(ix: FileIndex, line_id: int) -> str:
+    with ix.searcher() as searcher:
+        results = [line for line in searcher.documents(line_id=str(line_id))]
+
+    if len(results) != 0:
+        return results[0]["content"]
+    else:
+        return "No results found."
