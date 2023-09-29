@@ -48,7 +48,6 @@ def build_index(book_id: str, content: bytes) -> FileIndex:
 
         line_id = 0
         for line in f:
-            print("running here")
             writer.add_document(content=line.strip(), line_id=str(line_id))
             line_id += 1
 
