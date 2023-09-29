@@ -1,9 +1,11 @@
+from functools import lru_cache
 from io import BytesIO, TextIOWrapper
 
 from jieba.analyse import ChineseAnalyzer
 from whoosh.fields import TEXT, SchemaClass
 from whoosh.filedb.filestore import RamStorage
 from whoosh.index import FileIndex
+from whoosh.qparser import QueryParser
 
 storage = RamStorage()
 
@@ -53,3 +55,19 @@ def build_index(book_id: str, content: bytes) -> FileIndex:
     except Exception as e:
         print(e)
         return None
+
+
+@lru_cache()
+def query_by_prompt(ix: FileIndex, prompt: str) -> list:
+    results = []
+
+    with ix.searcher() as searcher:
+        query = QueryParser("content", ix.schema).parse(prompt)
+        _results = searcher.search(query)
+        if len(_results) == 0:
+            results.append("No results found.")
+        else:
+            for result in _results:
+                results.append(result["content"])
+
+    return results

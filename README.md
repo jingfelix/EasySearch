@@ -30,3 +30,17 @@ python3 mvp.py interactive
     res = requests.post('http://localhost:5000/book/b24a24a5-d166-458c-a794-d64733737c35?prompt=物理学从来没有')
     print(res.json()['data']['results'])
     ```
+
+## TODOs
+
+- 对文本的更多处理，如去除 prompt 中的标点
+- 优化存储池，增加过期时间，搜索缓存
+- 考虑将分词的过程换为异步的
+
+- 选择补全句子/段落
+- 如何查找相邻的段落/句子？
+    - 多标签搜索
+    - issue #4
+
+- 找一下可用的前端
+    - Novel/类Copilot

@@ -1,7 +1,8 @@
 from flask import blueprints, jsonify, request
 from whoosh.qparser import QueryParser
 
-from server.models import Books, BookFactory
+from server.models import BookFactory, Books
+from server.utils import query_by_prompt
 
 book_list = Books()
 
@@ -52,15 +53,6 @@ def search_by_id(book_id: str):
 
     # 在 ix 中查找
     ix = aBook.ix
-    results = []
-
-    with ix.searcher() as searcher:
-        query = QueryParser("content", ix.schema).parse(prompt)
-        _results = searcher.search(query)
-        if len(_results) == 0:
-            results.append("No results found.")
-        else:
-            for result in _results:
-                results.append(result["content"])
+    results = query_by_prompt(ix, prompt)
 
     return jsonify({"code": 0, "msg": "success", "data": {"results": results}})
