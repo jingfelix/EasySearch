@@ -1,60 +1,96 @@
 import logging
-
+import spacy
 import pdfplumber
 from flask import current_app
-import json
-
-if current_app:
-    logger = current_app.logger
-else:
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
 
 
-def filter_chapter_min_length(chapters: list, min_length: int = 10):
-    return [chapter for chapter in chapters if len(chapter["content"]) > min_length]
+def setup_logger():
+    """
+    设置日志记录器，如果在 Flask 应用上下文中运行，则使用当前应用程序的日志记录器，否则创建一个新的日志记录器。
+
+    Returns:
+        logger: 配置好的日志记录器对象
+    """
+    if current_app:
+        logger = current_app.logger
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+    return logger
 
 
-def check_chapter_sequence(chapters: list):
-    for i in range(len(chapters) - 1):
-        if int(chapters[i + 1]["title"]) - int(chapters[i]["title"]) != 1:
-            logger.warning(f"章节号不连续：{chapters[i]}")
-            return False
-    logger.info('章节号连续检测通过')
-    return True
+# 当下面每一行少于最小字的时候，就必须和上一行合并
+def format_limit_length(sents: list, minimum_length: int = 20):
+    """
+    将文本句子列表按照最小长度要求进行合并。
 
+    Args:
+        sents (list): 文本句子列表
+        minimum_length (int): 最小长度要求
 
-def process_pdf(pdf_file):
+    Returns:
+        list: 合并后的句子列表
+    """
+    res = []
+    temp = ''
+    for sent in sents:
+        if len(sent) > minimum_length:
+            res.append(temp)
+            temp = sent
+        else:
+            temp += sent
+    return res
+
+def process_pdf_to_sentence(pdf_file):
+    """
+   从 PDF 文件中提取文本，进行句子分割，并保存到文本文件中。
+
+   Args:
+       pdf_file (str): 输入的 PDF 文件路径
+   """
+    logger = setup_logger()
     logger.info(f"Processing {pdf_file} ...")
+
+    output_file = pdf_file.replace('.pdf', '.txt')
+    paragraphs = []
+
     with pdfplumber.open(pdf_file) as pdf:
-        chapters = []
-        chapter = {"title": "", "content": ""}
-        for page in pdf.pages:
-            text = page.extract_text()
-            for line in text.split('\n'):
-                if not line:
-                    continue
-                if line.isdigit():
-                    if chapter["title"]:  # 将上一章节添加到 chapters 列表中去（如果存在）
-                        chapters.append(chapter)
-                    chapter = {"title": line, "content": ""}  # 创建新章节
-                else:
-                    chapter["content"] += line + '\n'
-        if chapter["title"]:  # 添加最后一章到 chapters 列表中去（如果存在）
-            chapters.append(chapter)
+        _all_text = ''.join(page.extract_text().replace('\n', '') for page in pdf.pages)
 
-    chapters = filter_chapter_min_length(chapters, 10)
-    check_chapter_sequence(chapters)
+    # python -m spacy download zh_core_web_sm  下载中文模型
+    nlp = spacy.load("zh_core_web_sm")
+    doc = nlp(_all_text)
 
-    title = pdf_file.split('/')[-1].replace('.pdf', '')
-    res = {"title": title, "chapter": chapters}
+    paragraphs = [sent.text for sent in doc.sents]
 
-    json_file = pdf_file.replace('.pdf', '.json')
-    with open(json_file, 'w', encoding='utf-8') as f:
-        json.dump(res, f, ensure_ascii=False, indent=4)
-    logger.info(f"Saved {json_file}")
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(paragraphs))
+
+    logger.info(f"Saved {output_file}")
+
+
+def format_text_limit_length(text_path):
+    """
+   格式化给定文本文件中的文本，按照最小长度要求进行句子合并。
+
+   Args:
+       text_path (str): 输入的文本文件路径
+    """
+    logger = setup_logger()
+    logger.info(f"Formatting {text_path} ...")
+
+    with open(text_path, 'r', encoding='utf-8') as f:
+        text = f.read()
+
+    paragraphs = text.split('\n')
+    paragraphs = format_limit_length(paragraphs)
+
+    with open(text_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(paragraphs))
 
 
 if __name__ == '__main__':
-    logger.info('start main function')
-
+    logger = setup_logger()
+    logger.info('Start main function')
+    process_pdf_to_sentence("../../novels/维罗妮卡决定去死.pdf")
+    format_text_limit_length("../../novels/维罗妮卡决定去死.txt")
