@@ -1,6 +1,7 @@
 from functools import lru_cache
 from io import BytesIO, TextIOWrapper
 
+import pdfplumber
 from jieba.analyse import ChineseAnalyzer
 from whoosh.fields import ID, TEXT, SchemaClass
 from whoosh.filedb.filestore import RamStorage
@@ -10,6 +11,8 @@ from whoosh.qparser import QueryParser
 storage = RamStorage()
 
 analyzer = ChineseAnalyzer()
+from flask import current_app
+
 
 
 class ArticleSchema(SchemaClass):
@@ -88,3 +91,5 @@ def query_by_line_id(ix: FileIndex, line_id: int) -> str:
         return results[0]["content"]
     else:
         return "No results found."
+
+
