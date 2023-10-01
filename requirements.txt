@@ -12,3 +12,4 @@ jupyter==1.0.0
 rich==13.5.3
 typer~=0.9.0
 pdfplumber~=0.10.2
+spacy~=3.6.1
