@@ -1,7 +1,7 @@
 from flask import blueprints, jsonify, request
 
 from server.models import BookFactory, Books
-from server.utils import query_by_line_id, query_by_prompt
+from server.utils.search import query_by_line_id, query_by_prompt
 
 book_list = Books()
 

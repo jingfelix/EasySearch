@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from whoosh.index import FileIndex
 
-from server.utils import build_index
+from server.utils.search import build_index
 
 
 class BookFactory:
