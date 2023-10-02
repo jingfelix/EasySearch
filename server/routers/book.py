@@ -23,17 +23,15 @@ def book():
 
         name = str(file.filename).split(".")[0]
 
-        # 创建 book 对象
-        aBook = BookFactory.create_book(name, file.read())
-
-        if aBook:
-            book_list.add_book(aBook)
-
+        try:
+            # 创建 book 对象
+            aBook = BookFactory.create_book(name, file.read())
             return jsonify(
                 {"code": 0, "msg": "success", "data": {"book_id": aBook.book_id}}
             )
-        else:
-            return jsonify({"code": 1, "msg": "fail to create book", "data": {}})
+        except ValueError as e:
+            return jsonify({"code": 1, "msg": str(e), "data": {}})
+
 
     # return 使用的请求方法不对
     return jsonify({"code": 1, "msg": "unsupported method", "data": {}})
