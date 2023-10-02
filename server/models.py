@@ -13,34 +13,40 @@ from server.utils.search import build_index, INDEX_DIR, load_index
 class BookFactory:
     @staticmethod
     def create_book(name: str, content: bytes):
-        book_id = str(uuid4())
-        md5 = BookFactory.get_book_md5(content)
-        if BookFactory.check_duplicate(content):
-            raise ValueError("Duplicate book")
-        ix = build_index(book_id, content)
-        if ix:
-            book_index_path = BookFactory.get_book_index_path(book_id)
-            book_ = BookMeta(book_id, name, md5, book_index_path)
-            db.session.add(book_)
-            db.session.commit()
+        try:
+            book_id = str(uuid4())
+            md5 = BookFactory.get_book_md5(content)
 
-            return Book(book_id, name, ix)
-        else:
-            raise ValueError("Failed to create book index")
+            if BookFactory.check_duplicate(md5):
+                raise ValueError("Duplicate book")
 
+            ix = build_index(book_id, content)
+
+            if ix:
+                book_index_path = BookFactory.get_book_index_path(book_id)
+                book_ = BookMeta(book_id, name, md5, book_index_path)
+
+                with db.session.begin():
+                    db.session.add(book_)
+
+                return Book(book_id, name, ix)
+            else:
+                raise ValueError("Failed to create book index")
+        except Exception as e:
+            raise ValueError(f"Failed to create book: {str(e)}")
+
+
+    @staticmethod
     def get_book_md5(content: bytes):
         return hashlib.md5(content).hexdigest()
 
+    @staticmethod
     def get_book_index_path(book_id: str):
         return os.path.join(INDEX_DIR, f"novel_index_{book_id}.pkl")
 
-    def check_duplicate(content: bytes):
-        md5 = BookFactory.get_book_md5(content)
-        book_ = db.session.query(BookMeta).filter_by(md5=md5).first()
-        if book_:
-            return True
-        else:
-            return False
+    @staticmethod
+    def check_duplicate(md5: str):
+        return db.session.query(BookMeta).filter_by(md5=md5).first() is not None
 
 
 class Book:
@@ -66,22 +72,25 @@ class Books:
     def __init__(self) -> None:
         self.ix_map = {}
 
-    def query_all_book(self):
+    def query_all_books(self):
         return db.session.query(BookMeta).all()
-    def load_ix(self,name):
-        ix = load_index(name)
-        if ix:
-            self.ix_map[name] = ix
-        else:
-            raise ValueError("Failed to load index")
 
-    def get_ix(self,name):
-        ix = self.ix_map.get(name)
+    def load_ix(self, book_id):
+        try:
+            ix = load_index(book_id)
+            if ix:
+                self.ix_map[book_id] = ix
+            else:
+                raise ValueError("Failed to load index")
+        except Exception as e:
+            raise ValueError(f"Failed to load index for book {book_id}: {str(e)}")
+
+    def get_ix(self, book_id):
+        ix = self.ix_map.get(book_id)
         if not ix:
-            self.load_ix(name)
-            ix = self.ix_map.get(name)
+            self.load_ix(book_id)
+            ix = self.ix_map.get(book_id)
         return ix
-
 
     def get_book_by_id(self, book_id: str):
         book_ = db.session.query(BookMeta).filter_by(uuid=book_id).first()
@@ -92,16 +101,16 @@ class Books:
             return None
 
     def list_books(self):
-        all_ = self.query_all_book()
-        if not all_:
+        all_books = self.query_all_books()
+        if not all_books:
             return []
-        return [{"book_id": book.uuid, "name": book.title} for book in all_]
+        return [{"book_id": book.uuid, "name": book.title} for book in all_books]
 
     def list_names(self):
-        return [book.title for book in self.list_books()]
+        return [book.title for book in self.query_all_books()]
 
     def list_ids(self):
-        return [book.uuid for book in self.list_books()]
+        return [book.uuid for book in self.query_all_books()]
 
     def book_exists(self, book_id: str):
         return book_id in self.list_ids()
