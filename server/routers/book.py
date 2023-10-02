@@ -8,62 +8,57 @@ book_list = Books()
 bp = blueprints.Blueprint("book", __name__, url_prefix="/book")
 
 
-@bp.route("/", methods=["GET", "POST"])
-def book():
-    if request.method == "GET":
-        return jsonify({"code": 0, "msg": "success", "data": book_list.list_books()})
-
-    elif request.method == "POST":
-        # 上传书目
-
-        # 获取二进制文件
-        file = request.files.get("book", None)
-        if file is None:
-            return jsonify({"code": 1, "msg": "book is empty", "data": {}})
-
-        name = str(file.filename).split(".")[0]
-
-        try:
-            # 创建 book 对象
-            aBook = BookFactory.create_book(name, file.read())
-            return jsonify(
-                {"code": 0, "msg": "success", "data": {"book_id": aBook.book_id}}
-            )
-        except ValueError as e:
-            return jsonify({"code": 1, "msg": str(e), "data": {}})
+def make_response(code, msg, data=None):
+    if data is None:
+        data = {}
+    return jsonify({"code": code, "msg": msg, "data": data})
 
 
-    # return 使用的请求方法不对
-    return jsonify({"code": 1, "msg": "unsupported method", "data": {}})
+@bp.route("/", methods=["GET"])
+def list_books():
+    return make_response(0, "success", book_list.list_books())
+
+
+@bp.route("/", methods=["POST"])
+def upload_book():
+    file = request.files.get("book")
+    if not file:
+        return make_response(1, "book is empty")
+
+    name = file.filename.split(".")[0]
+
+    try:
+        aBook = BookFactory.create_book(name, file.read())
+        return make_response(0, "success", {"book_id": aBook.book_id})
+    except ValueError as e:
+        return make_response(1, str(e))
 
 
 @bp.route("/<book_id>", methods=["GET"])
-def search_by_book_id(book_id: str):
+def get_book_by_id(book_id):
     prompt = request.args.get("prompt", "")
-    if prompt == "":
-        return jsonify({"code": 1, "msg": "prompt is empty", "data": {}})
+    if not prompt:
+        return make_response(1, "prompt is empty")
 
-    # 在 books 中查找 book_id 对应的 ix
     aBook = book_list.get_book_by_id(book_id)
-    if aBook is None:
-        return jsonify({"code": 1, "msg": "book not found", "data": {}})
+    if not aBook:
+        return make_response(1, "book not found")
 
-    # 在 ix 中查找
     ix = aBook.ix
-    results = query_by_prompt(ix, prompt)
+    results = query_by_prompt(ix, prompt)  # 请确保已导入 query_by_prompt
 
-    return jsonify({"code": 0, "msg": "success", "data": {"results": results}})
+    return make_response(0, "success", {"results": results})
 
 
 @bp.route("/<book_id>/<line_id>", methods=["GET"])
-def search_by_line_id(book_id: str, line_id: str):
-    # 在 books 中查找 book_id 对应的 ix
+def get_line_by_id(book_id, line_id):
     aBook = book_list.get_book_by_id(book_id)
-    if aBook is None:
-        return jsonify({"code": 1, "msg": "book not found", "data": {}})
+    if not aBook:
+        return make_response(1, "book not found")
 
-    # 在 ix 中查找
     ix = aBook.ix
-    line = query_by_line_id(ix, int(line_id))
-
-    return jsonify({"code": 0, "msg": "success", "data": {"line": line}})
+    try:
+        line = query_by_line_id(ix, int(line_id))  # 请确保已导入 query_by_line_id
+        return make_response(0, "success", {"line": line})
+    except ValueError:
+        return make_response(1, "invalid line_id")
