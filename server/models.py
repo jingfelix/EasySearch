@@ -4,14 +4,19 @@ from uuid import uuid4
 from whoosh.index import FileIndex
 
 from server.utils.search import build_index
-
+from server.app import db
 
 class BookFactory:
     @staticmethod
     def create_book(name: str, content: bytes):
         book_id = str(uuid4())
         ix = build_index(book_id, content)
+        index_name = f'novel_index_{book_id}'
         if ix:
+            # 更新 db_store 的内容
+            with storage.open_file(index_name, create=True) as f:
+                db_store.create_file(index_name, f)
+
             return Book(book_id, name, ix)
         else:
             raise ValueError("Failed to create book index")
@@ -65,3 +70,9 @@ class Books:
 
     def book_exists(self, book_id: str):
         return book_id in self.list_ids()
+
+class DBIndex(db.Model):
+    __tablename__ = "index"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    bytes = db.Column(db.LargeBinary, nullable=False)

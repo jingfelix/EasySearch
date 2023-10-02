@@ -1,19 +1,12 @@
 from functools import lru_cache
 from io import BytesIO, TextIOWrapper
 
-import pdfplumber
 from jieba.analyse import ChineseAnalyzer
 from whoosh.fields import ID, TEXT, SchemaClass
-from whoosh.filedb.filestore import RamStorage
 from whoosh.index import FileIndex
 from whoosh.qparser import QueryParser
 
-storage = RamStorage()
-
 analyzer = ChineseAnalyzer()
-from flask import current_app
-
-
 
 class ArticleSchema(SchemaClass):
     content = TEXT(stored=True, analyzer=analyzer)
@@ -31,6 +24,7 @@ def _create_in(schema, indexname=None):
     if not indexname:
         indexname = _DEF_INDEX_NAME
 
+    from server.app import storage
     return FileIndex.create(storage, schema, indexname)
 
 
