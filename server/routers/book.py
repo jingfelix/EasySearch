@@ -62,4 +62,3 @@ def get_line_by_id(book_id, line_id):
         return make_response(0, "success", {"line": line})
     except ValueError:
         return make_response(1, "invalid line_id")
-
