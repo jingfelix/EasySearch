@@ -69,7 +69,7 @@ def query_by_prompt(ix: FileIndex, prompt: str) -> list:
     results = []
     with ix.searcher() as searcher:
         query = QueryParser("content", ix.schema).parse(prompt)
-        _results = searcher.search(query)
+        _results = searcher.search(query, limit=20)
         if len(_results) == 0:
             results.append({"id": -1, "content": "No results found."})
         else:

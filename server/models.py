@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from whoosh.index import FileIndex
 
-from server.app import db
+from server.app import db, cache
 from server.scheme.book import BookMeta
 from server.utils.search import build_index, INDEX_DIR, load_index
 
@@ -68,6 +68,13 @@ class Book:
         return self._ix
 
 
+# 添加一个函数来获取书籍信息，并使用缓存
+@cache.cached(timeout=3600, key_prefix='book_meta')
+def get_book_meta(book_id):
+    return db.session.query(BookMeta).filter_by(uuid=book_id).first()
+
+
+
 class Books:
     def __init__(self) -> None:
         self.ix_map = {}
@@ -93,10 +100,16 @@ class Books:
         return ix
 
     def get_book_by_id(self, book_id: str):
-        book_ = db.session.query(BookMeta).filter_by(uuid=book_id).first()
-        if book_:
+        book_meta = get_book_meta(book_id)
+        if book_meta is None:
+            # 如果缓存中没有，再从数据库中获取，并存入缓存
+            book_meta = db.session.query(BookMeta).filter_by(uuid=book_id).first()
+            if book_meta:
+                cache.set('book_meta_' + book_id, book_meta, timeout=3600)  # 存入缓存
+        if book_meta:
             ix = self.get_ix(book_id)
-            return Book(book_id, book_.title, ix)
+            title = book_meta.title
+            return Book(book_id, title, ix)
         else:
             return None
 
