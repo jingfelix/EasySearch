@@ -48,29 +48,6 @@ class BookFactory:
         with db.session() as session:
             return session.query(BookMeta).filter_by(md5=md5).first() is not None
 
-        try:
-            book_id = str(uuid4())
-            md5 = BookFactory.get_book_md5(content)
-
-            if BookFactory.check_duplicate(md5):
-                raise ValueError("Duplicate book")
-
-            ix = build_index(book_id, content)
-
-            if ix:
-                book_index_path = BookFactory.get_book_index_path(book_id)
-                book_ = BookMeta(book_id, name, md5, book_index_path)
-
-                with db.session.begin():
-                    db.session.add(book_)
-
-                return Book(book_id, name, ix)
-            else:
-                raise ValueError("Failed to create book index")
-        except Exception as e:
-            raise ValueError(f"Failed to create book: {str(e)}")
-
-
     @staticmethod
     def get_book_md5(content: bytes):
         return hashlib.md5(content).hexdigest()
