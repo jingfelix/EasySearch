@@ -2,6 +2,7 @@ from flask import Flask
 import logging
 
 from flask_sqlalchemy import SQLAlchemy
+from flask_caching import Cache
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "secret key"
@@ -13,9 +14,11 @@ app.logger.addHandler(log_handler)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
 db = SQLAlchemy()
 db.init_app(app)
+
+cache = Cache(app,config={'CACHE_TYPE': 'SimpleCache'})
+
 
 from server.routers.book import bp as book_bp
 
