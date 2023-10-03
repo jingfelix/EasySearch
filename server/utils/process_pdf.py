@@ -92,5 +92,7 @@ def format_text_limit_length(text_path):
 if __name__ == '__main__':
     logger = setup_logger()
     logger.info('Start main function')
-    process_pdf_to_sentence("../../novels/维罗妮卡决定去死.pdf")
-    format_text_limit_length("../../novels/维罗妮卡决定去死.txt")
+    # process_pdf_to_sentence("../../novels/未婚妻.pdf")
+    format_text_limit_length("../../novels/未婚妻.txt")
+    # process_pdf_to_sentence("../../novels/维罗妮卡决定去死.pdf")
+    # format_text_limit_length("../../novels/维罗妮卡决定去死.txt")

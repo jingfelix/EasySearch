@@ -25,7 +25,6 @@ class BookFactory:
             if ix:
                 book_index_path = BookFactory.get_book_index_path(book_id)
                 book_ = BookMeta(book_id, name, md5, book_index_path)
-
                 with db.session.begin():
                     db.session.add(book_)
 
@@ -46,7 +45,9 @@ class BookFactory:
 
     @staticmethod
     def check_duplicate(md5: str):
-        return db.session.query(BookMeta).filter_by(md5=md5).first() is not None
+        with db.session() as session:
+            return session.query(BookMeta).filter_by(md5=md5).first() is not None
+
 
 
 class Book:
