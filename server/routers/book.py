@@ -59,6 +59,7 @@ def get_line_by_id(book_id, line_id):
     ix = aBook.ix
     try:
         line = query_by_line_id(ix, int(line_id))  # 请确保已导入 query_by_line_id
-        return make_response(0, "success", {"line": line})
+        result = {"id": line_id, "content": line}
+        return make_response(0, "success", {"results": [result]})
     except ValueError:
         return make_response(1, "invalid line_id")
