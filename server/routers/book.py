@@ -14,12 +14,12 @@ def make_response(code, msg, data=None):
     return jsonify({"code": code, "msg": msg, "data": data})
 
 
-@bp.route("/", methods=["GET"])
+@bp.route("", methods=["GET"])
 def list_books():
     return make_response(0, "success", book_list.list_books())
 
 
-@bp.route("/", methods=["POST"])
+@bp.route("", methods=["POST"])
 def upload_book():
     file = request.files.get("book")
     if not file:
