@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from whoosh.index import FileIndex
 
-from server.app import db, cache
+from server.app import db, cache, app
 from server.scheme.book import BookMeta
 from server.utils.search import build_index, INDEX_DIR, load_index
 
@@ -90,6 +90,11 @@ def get_book_meta(book_id):
 class Books:
     def __init__(self) -> None:
         self.ix_map = {}
+
+        with app.app_context():
+            self.query_all_books = db.session.query(BookMeta).all
+            for book_meta in self.query_all_books():
+                self.load_ix(book_meta.uuid)
 
     def query_all_books(self):
         return db.session.query(BookMeta).all()
