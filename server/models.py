@@ -25,8 +25,10 @@ class BookFactory:
             if ix:
                 book_index_path = BookFactory.get_book_index_path(book_id)
                 book_ = BookMeta(book_id, name, md5, book_index_path)
+                print(book_)
                 with db.session() as session:
                     session.add(book_)
+                    session.commit()
 
                 return Book(book_id, name, ix)
             else:

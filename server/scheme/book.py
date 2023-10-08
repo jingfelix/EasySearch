@@ -1,4 +1,3 @@
-
 from server.app import db
 from server.scheme.base import BaseModel
 from sqlalchemy import Column, Integer, String, Boolean
@@ -19,3 +18,12 @@ class BookMeta(BaseModel):
         self.title = title
         self.md5 = md5
         self.index_path = index_path
+
+    def __repr__(self):
+        result = {
+            'uuid': self.uuid,
+            'title': self.title,
+            'md5': self.md5,
+            'index_path': self.index_path
+        }
+        return str(result)
