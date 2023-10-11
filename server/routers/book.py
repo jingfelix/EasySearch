@@ -1,7 +1,9 @@
+import json
+
 from flask import blueprints, jsonify, request
 
 from server.models import BookFactory, Books
-from server.utils.search import query_by_line_id, query_by_prompt
+from server.utils.search import query_by_line_id, query_by_prompt, get_last_sentence
 
 book_list = Books()
 
@@ -48,6 +50,41 @@ def get_book_by_id(book_id):
     results = query_by_prompt(ix, prompt)  # 请确保已导入 query_by_prompt
 
     return make_response(0, "success", {"results": results})
+
+
+@bp.route("/v1/<book_id>", methods=["GET"])
+def get_book_by_id_v1(book_id):
+    prompt = request.args.get("prompt", "")
+
+    if len(prompt) > 100:
+        prompt = prompt[-100:]
+
+    lastSentence = get_last_sentence(prompt)
+
+    optional_num = request.args.get("number", 5)
+    if optional_num > 10:
+        optional_num = 10
+
+    if not lastSentence:
+        return make_response(1, "not found valid last prompt")
+
+    aBook = book_list.get_book_by_id(book_id)
+    if not aBook:
+        return make_response(1, "book not found")
+
+    ix = aBook.ix
+    results = query_by_prompt(ix, lastSentence, optional_num)
+    if len(results) == 0:
+        results.append({"id": -1, "content": "No results found."})
+
+    # 判断是否是结尾段落的精准匹配
+    bestComplete = results[0]
+    if bestComplete["content"].endswith(lastSentence.strip()):
+        line = int(bestComplete["id"])
+        results = [{"id": line + 1, "content": query_by_line_id(ix, line + 1)}]
+        return make_response(0, "success", {"results": results, "type": "next-line"})
+
+    return make_response(0, "success", {"results": results, "type": "fuzzy"})
 
 
 @bp.route("/<book_id>/<line_id>", methods=["GET"])

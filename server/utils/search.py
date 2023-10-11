@@ -7,10 +7,13 @@ from whoosh.fields import ID, TEXT, SchemaClass, Schema
 from whoosh.filedb.filestore import RamStorage
 from whoosh.index import FileIndex, open_dir, create_in
 from whoosh.qparser import QueryParser
+import spacy
 
 storage = RamStorage()
 
 analyzer = ChineseAnalyzer()
+
+spacyCn = spacy.load("zh_core_web_sm")
 
 
 class ArticleSchema(SchemaClass):
@@ -65,11 +68,11 @@ def load_index(book_id: str):
 
 
 @lru_cache()
-def query_by_prompt(ix: FileIndex, prompt: str) -> list:
+def query_by_prompt(ix: FileIndex, prompt: str, limit=5) -> list:
     results = []
     with ix.searcher() as searcher:
         query = QueryParser("content", ix.schema).parse(prompt)
-        _results = searcher.search(query, limit=20)
+        _results = searcher.search(query, limit=limit)
         if len(_results) == 0:
             results.append({"id": -1, "content": "No results found."})
         else:
@@ -91,3 +94,9 @@ def query_by_line_id(ix: FileIndex, line_id: int) -> str:
         return results[0]["content"]
     else:
         return "No results found."
+
+
+@lru_cache()
+def get_last_sentence(content: str) -> str:
+    doc = spacyCn(content)
+    return list(doc.sents)[-1].text
