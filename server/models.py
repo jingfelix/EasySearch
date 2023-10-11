@@ -132,6 +132,19 @@ class Books:
         else:
             return None
 
+    def del_book_by_id(self, book_id: str):
+        try:
+            ix = self.ix_map.get(book_id)
+            if ix:
+                ix.close()
+                del self.ix_map[book_id]
+            with db.session.begin():
+                db.session.query(BookMeta).filter_by(uuid=book_id).delete()
+                db.session.commit()
+            return True
+        except Exception as e:
+            raise ValueError(f"Failed to delete book {book_id}: {str(e)}")
+
     def list_books(self):
         all_books = self.query_all_books()
         if not all_books:

@@ -23,7 +23,7 @@ python3 mvp.py interactive
     book_id = res.json()['data']['book_id']
     ```
 
-- POST /book/{book_id}?prompt=
+- GET /book/{book_id}?prompt=
     - 查询书籍中与prompt相似句子，返回一个列表
     ```python
     import requests
@@ -31,12 +31,19 @@ python3 mvp.py interactive
     print(res.json()['data']['results'])
     ```
 
+- DEL /book/{book_id}
+    - 删除上传的指定书籍
+    ```python
+    import requests
+    res = requests.delete('http://localhost:5000/book/b24a24a5-d166-458c-a794-d64733737c35')
+    ```
+
 - GET /book/{book_id}/{line_id}
     - 返回书籍中指定行号的句子
     ```python
     import requests
     res = requests.get('http://localhost:5000/book/b24a24a5-d166-458c-a794-d64733737c35/0')
-    print(res.json()['data']['line'])
+    print(res.json()['data']['results'])
     ```
 
 ## TODOs

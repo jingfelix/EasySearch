@@ -52,6 +52,18 @@ def get_book_by_id(book_id):
     return make_response(0, "success", {"results": results})
 
 
+@bp.route("/<book_id>/", methods=["DEL"])
+def delete_book_by_id(book_id):
+    aBook = book_list.get_book_by_id(book_id)
+    if not aBook:
+        return make_response(1, "book not found")
+
+    if book_list.del_book_by_id(book_id):
+        return make_response(0, "success")
+    else:
+        return make_response(1, "failed to delete book")
+
+
 @bp.route("/v1/<book_id>", methods=["GET"])
 def get_book_by_id_v1(book_id):
     prompt = request.args.get("prompt", "")
