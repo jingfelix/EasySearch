@@ -20,9 +20,11 @@ db.init_app(app)
 cache = Cache(app,config={'CACHE_TYPE': 'SimpleCache'})
 
 
-from server.routers.book import bp as book_bp
+from server.routers.book import bp as book_bp, book_list
 
 app.register_blueprint(book_bp)
 
 with app.app_context():
     db.create_all()
+
+book_list.init()

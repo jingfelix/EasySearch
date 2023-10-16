@@ -93,6 +93,7 @@ class Books:
     def __init__(self) -> None:
         self.ix_map = {}
 
+    def init(self):
         with app.app_context():
             self.query_all_books = db.session.query(BookMeta).all
             for book_meta in self.query_all_books():
