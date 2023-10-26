@@ -3,6 +3,7 @@ import json
 from flask import blueprints, jsonify, request
 
 from server.models import BookFactory, Books
+from server.utils.auth import token_required
 from server.utils.search import query_by_line_id, query_by_prompt, get_last_sentence
 
 book_list = Books()
@@ -22,6 +23,7 @@ def list_books():
 
 
 @bp.route("", methods=["POST"])
+@token_required
 def upload_book():
     file = request.files.get("book")
     if not file:
@@ -37,6 +39,7 @@ def upload_book():
 
 
 @bp.route("/<book_id>", methods=["GET"])
+@token_required
 def get_book_by_id(book_id):
     prompt = request.args.get("prompt", "")
     if not prompt:
@@ -53,6 +56,7 @@ def get_book_by_id(book_id):
 
 
 @bp.route("/<book_id>/", methods=["DEL"])
+@token_required
 def delete_book_by_id(book_id):
     aBook = book_list.get_book_by_id(book_id)
     if not aBook:
@@ -65,6 +69,7 @@ def delete_book_by_id(book_id):
 
 
 @bp.route("/v1/<book_id>", methods=["GET"])
+@token_required
 def get_book_by_id_v1(book_id):
     prompt = request.args.get("prompt", "")
 
@@ -100,6 +105,7 @@ def get_book_by_id_v1(book_id):
 
 
 @bp.route("/<book_id>/<line_id>", methods=["GET"])
+@token_required
 def get_line_by_id(book_id, line_id):
     aBook = book_list.get_book_by_id(book_id)
     if not aBook:
