@@ -1,0 +1,9 @@
+bind = "0.0.0.0:5050"
+workers = 4
+backlog = 2048
+pidfile = "log/gunicorn.pid"
+accesslog = "-"
+errorlog = "-"
+timeout = 600
+debug = False
+loglevel = "debug"

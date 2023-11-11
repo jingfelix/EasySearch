@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 import logging
 
@@ -22,13 +23,13 @@ db.init_app(app)
 
 cache = Cache(app,config={'CACHE_TYPE': 'SimpleCache'})
 
-with open(".secret", "rb") as f:
-    secret = f.read()
-
-if not secret:
+if not os.path.exists(".secret"):
     with open(".secret", "wb") as f:
         secret = Fernet.generate_key()
         f.write(secret)
+
+with open(".secret", "rb") as f:
+    secret = f.read()
 
 Encryptor = Fernet(secret)
 
