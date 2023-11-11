@@ -12,7 +12,8 @@ ENV PYTHONUNBUFFERED=1
 
 # Install pip requirements
 COPY requirements.txt .
-RUN python -m pip install --no-cache-dir --upgrade -r requirements.txt -i https://mirrors.hust.edu.cn/pypi/web/simple
+RUN python -m pip install --no-cache-dir --upgrade -r requirements.txt
+# RUN python -m pip install --no-cache-dir --upgrade -r requirements.txt -i https://mirrors.hust.edu.cn/pypi/web/simple
 
 WORKDIR /app
 COPY ./server /app/server
