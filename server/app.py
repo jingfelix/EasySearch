@@ -23,12 +23,12 @@ db.init_app(app)
 
 cache = Cache(app,config={'CACHE_TYPE': 'SimpleCache'})
 
-if not os.path.exists(".secret"):
-    with open(".secret", "wb") as f:
+if not os.path.exists(os.path.join(app.instance_path, ".secret")):
+    with open(os.path.join(app.instance_path, ".secret"), "wb") as f:
         secret = Fernet.generate_key()
         f.write(secret)
 
-with open(".secret", "rb") as f:
+with open(os.path.join(app.instance_path, ".secret"), "rb") as f:
     secret = f.read()
 
 Encryptor = Fernet(secret)
