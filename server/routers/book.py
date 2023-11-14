@@ -100,9 +100,9 @@ def get_book_by_id_v1(book_id):
     last_query: int = query_cache.get(user_id = session["_id"], book_id=book_id)
     if last_query != -1:
         # 排序依据：与上次查询的向后距离
-        results.sort(key=lambda x: x["id"] - last_query)
+        results.sort(key=lambda x: int(x["id"]) - last_query)
 
-    query_cache.set(user_id = session["_id"], book_id=book_id, result=results[0]["id"])
+    query_cache.set(user_id = session["_id"], book_id=book_id, result=int(results[0]["id"]))
 
     # 判断是否是结尾段落的精准匹配
     bestComplete = results[0]
