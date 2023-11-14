@@ -9,6 +9,16 @@
 python3 mvp.py interactive
 ```
 
+现在也可以使用 Docker 容器来运行服务
+```bash
+docker run -it -d -p 5050:5050 --name search jingfelix/easysearch
+```
+
+默认仅注册一个名为 admin 的用户，其对应的 api_key 将打印在 log，如：
+```bash
+[2023-11-11 09:11:10 +0000] [10] [INFO] Admin: admin AAAAABlT0UMv8mypqB37IXlUefbq2OJQYxCtj8FT_kWw4f0-BqE-1HEIs4hQ8s9Yb72gm2X2GsctbxhDvqIAGG4iYO75waxL0S0eThjvDM_4N4erAPVGr0=
+```
+
 ## API reference
 
 - GET /book/
@@ -25,6 +35,14 @@ python3 mvp.py interactive
 
 - GET /book/{book_id}?prompt=
     - 查询书籍中与prompt相似句子，返回一个列表
+    ```python
+    import requests
+    res = requests.post('http://localhost:5000/book/b24a24a5-d166-458c-a794-d64733737c35?prompt=物理学从来没有')
+    print(res.json()['data']['results'])
+    ```
+
+- GET /book/v1/{book_id}?prompt=
+    - 增强搜索，优化了分句方式
     ```python
     import requests
     res = requests.post('http://localhost:5000/book/b24a24a5-d166-458c-a794-d64733737c35?prompt=物理学从来没有')

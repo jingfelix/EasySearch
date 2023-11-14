@@ -12,7 +12,7 @@ from server.utils.search import build_index, INDEX_DIR, load_index
 
 class BookFactory:
     @staticmethod
-    def create_book(name: str, content: bytes):
+    def create_book(name: str, content: bytes, user_id: int = None):
         try:
             book_id = str(uuid4())
             md5 = BookFactory.get_book_md5(content)
@@ -24,7 +24,7 @@ class BookFactory:
 
             if ix:
                 book_index_path = BookFactory.get_book_index_path(book_id)
-                book_ = BookMeta(book_id, name, md5, book_index_path)
+                book_ = BookMeta(book_id, name, md5, book_index_path, user_id)
                 print(book_)
                 with db.session() as session:
                     session.add(book_)
@@ -160,3 +160,15 @@ class Books:
 
     def book_exists(self, book_id: str):
         return book_id in self.list_ids()
+
+
+
+class QueryCache():
+    def __init__(self) -> None:
+        self.cache = {}
+
+    def get(self, user_id: int, book_id: str) -> int:
+        return self.cache.get((user_id, book_id), -1)
+    
+    def set(self, user_id: int, book_id: str, result: int = None):
+        self.cache[(user_id, book_id)] = result
