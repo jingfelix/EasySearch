@@ -9,6 +9,12 @@ from server.scheme.user import User
 
 @app.cli.command()
 def admin():
+
+    _user = User.query.filter_by(name="admin").first()
+    if _user:
+        click.echo("Admin already exists.")
+        return
+
     user = User(name="admin", token="")
     db.session.add(user)
     db.session.commit()

@@ -102,7 +102,7 @@ def get_book_by_id_v1(book_id):
         # 排序依据：与上次查询的向后距离
         results.sort(key=lambda x: x["id"] - last_query)
 
-    query_cache.set(user_id = session["_id"], book_id=book_id, line_id=results[0]["id"])
+    query_cache.set(user_id = session["_id"], book_id=book_id, result=results[0]["id"])
 
     # 判断是否是结尾段落的精准匹配
     bestComplete = results[0]

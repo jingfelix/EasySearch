@@ -16,13 +16,14 @@ RUN python -m pip install --no-cache-dir --upgrade -r requirements.txt
 # RUN python -m pip install --no-cache-dir --upgrade -r requirements.txt -i https://mirrors.hust.edu.cn/pypi/web/simple
 
 WORKDIR /app
+VOLUME /app
 COPY ./server /app/server
-COPY ./main.py ./gunicorn.conf.py /app
+COPY ./main.py ./gunicorn.conf.py ./entrypoint.sh /app
+
+RUN chmod +x /app/entrypoint.sh
 
 RUN mkdir -p /app/index_ix && mkdir -p /app/instance && mkdir -p /app/log
 
 RUN python -m spacy download zh_core_web_sm
 
-RUN flask --app main admin
-
-CMD ["gunicorn", "-c", "gunicorn.conf.py", "main:app"]
+CMD ["/usr/local/bin/gunicorn", "-c", "/app/gunicorn.conf.py", "main:app"]
