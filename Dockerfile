@@ -18,9 +18,7 @@ RUN python -m pip install --no-cache-dir --upgrade -r requirements.txt
 WORKDIR /app
 VOLUME /app
 COPY ./server /app/server
-COPY ./main.py ./gunicorn.conf.py ./entrypoint.sh /app
-
-RUN chmod +x /app/entrypoint.sh
+COPY ./main.py ./gunicorn.conf.py /app
 
 RUN mkdir -p /app/index_ix && mkdir -p /app/instance && mkdir -p /app/log
 
